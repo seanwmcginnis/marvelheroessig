@@ -828,7 +828,7 @@ if (!empty($_POST["action"])) {
 		</div>
 		<div id='version' name='version'>
 			<p>
-				2.1.1
+				2.1.2
 			</p>
 		</div>
 		<form id='marvelform' name='marvelform' method='post' action='configuresig.php'>
@@ -1031,6 +1031,10 @@ if (!empty($_POST["action"])) {
 			} else if (!empty($_COOKIE["marvelsig_position_grid"])) {
 				$val = $_COOKIE['marvelsig_position_grid'];
 			}
+			while(strlen($val) < (6 * $num_characters))
+			{
+				$val = $val . "X-1Y-1";
+			}
 			print "
 			<input type='hidden' id='position_grid' name='position_grid' value='$val'>
 			";
@@ -1045,6 +1049,10 @@ if (!empty($_POST["action"])) {
 				$val = $_POST['level_grid'];
 			} else if (!empty($_COOKIE["marvelsig_level_grid"])) {
 				$val = $_COOKIE['marvelsig_level_grid'];
+			}
+			while(strlen($val) < (3 * $num_characters))
+			{
+				$val = $val . "000";
 			}
 			print "
 			<input type='hidden' id='level_grid' name='level_grid' value='$val'>
@@ -1071,6 +1079,10 @@ if (!empty($_POST["action"])) {
 			} else if (!empty($_COOKIE["marvelsig_costume_grid"])) {
 				$val = $_COOKIE['marvelsig_costume_grid'];
 			}
+			while(strlen($val) < (2 * $num_characters))
+			{
+				$val = $val . "00";
+			}
 			print "
 			<input type='hidden' id='costume_grid' name='costume_grid' value='$val'>
 			";
@@ -1085,6 +1097,10 @@ if (!empty($_POST["action"])) {
 				$val = $_POST['flair_grid'];
 			} else if (!empty($_COOKIE["marvelsig_flair_grid"])) {
 				$val = $_COOKIE['marvelsig_flair_grid'];
+			}
+			while(strlen($val) < (2 * $num_characters))
+			{
+				$val = $val . "00";
 			}
 			print "
 			<input type='hidden' id='flair_grid' name='flair_grid' value='$val'>
