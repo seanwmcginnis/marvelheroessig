@@ -36,6 +36,24 @@ h5 {
 	z-index: 30;
 }
 
+.SourceArea {
+	background-color: #BFBDBD;
+	border: solid 1px #BFBDBD;
+	color: #000000;
+	height: 18px;
+	padding-left: 10px;
+	width: 80px;
+	box-shadow: 2px 2px 0 #828181 inset;
+	border: 0;
+	border-radius: 5px;
+	font-family: Sansation, Arial;
+	font-size: 10px;
+	position: absolute;
+	left: 247px;
+	top: 8.75px;
+	z-index: 30;
+}
+
 .LevelArea {
 	left: 8.75px;
 	top: 8.75px;
@@ -113,9 +131,12 @@ h5 {
 	top: 10px;
 }
 
-.flair_image
-{
-	position: absolute;	
+.flair_image {
+	position: absolute;
+}
+
+.source_image {
+	position: absolute;
 }
 
 .prestige_level_0 {
@@ -279,8 +300,10 @@ h5 {
 	border: 0px;
 	margin: 0 auto;
 	width: 762px;
+	height: 1000px;
 	position: relative;
 	z-index: 0;
+	overflow: hidden;
 }
 
 .titleclause {
@@ -322,8 +345,8 @@ h5 {
 	margin: 0 auto;
 }
 
-#helptext {	 
-	width:200px;
+#helptext {
+	width: 200px;
 	height: 50px;
 	position: absolute;
 	top: 0px;
@@ -334,8 +357,8 @@ h5 {
 }
 
 #version {
-	color: #00aaff;	 
-	width:100px;
+	color: #00aaff;
+	width: 100px;
 	height: 50px;
 	position: absolute;
 	top: 0px;

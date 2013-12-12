@@ -34,11 +34,8 @@ $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, "marvelheroesdb");
 function customError($errno, $errstr) {
 	echo "<b>Error:</b> [$errno] $errstr<br>";
 	echo "Ending Script";
-	global $characters;
-	global $costume_grid;
-	echo $costume_grid;
-	var_dump(debug_backtrace());
-	print_r($characters);
+	global $flair;
+	print_r($flair);
 	die();
 }
 set_error_handler("customError");
@@ -96,7 +93,7 @@ $border_type = 0;
 if (isset($_GET['border_type'])) {
 	$border_type = intval($_GET['border_type']);
 }
-if ($border_type > 2) {
+if ($border_type > 3) {
 	$border_type = 0;
 }
 
@@ -148,10 +145,11 @@ $query = "SELECT * FROM flair ORDER BY flair_index";
 $result = $mysqli -> query($query);
 while ($myrow = $result -> fetch_assoc()) {
 	$newflair = new MarvelFlair();
-	$newflair -> set_flair_index(intval($myrow['flair_index']));
+	$flair_index = intval($myrow['flair_index']);
+	$newflair -> set_flair_index($flair_index);
 	$newflair -> set_flair_name($myrow['flair_name']);
 	$newflair -> set_flair_file($myrow['flair_file']);
-	array_push($flair, $newflair);
+	$flair[$flair_index] = $newflair;
 }
 $result -> close();
 $offset = 0;
@@ -285,6 +283,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 		}
 		$level = -1;
 		$flair_index = 0;
+		$lowerleft_flair_index = 0;
 		// If there is no character, load a blank image.
 		if ($char_index < 0) {
 			if ($view_mode == 0) {
@@ -300,6 +299,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			}
 			$level = intval(getGridValue($level_grid, $char_index, 3));
 			$flair_index = intval(getGridValue($flair_grid, $char_index, 2));
+			$lowerleft_flair_index = intval(getGridValue($flair_grid, $num_characters + $char_index, 2));
 		}
 
 		// Calculate drawing coordinates
@@ -339,10 +339,46 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			imagettftext($canvas, 12, 0, $x_offset + 24, $y_offset + 40, $black, $font, $text);
 			imagettftext($canvas, 12, 0, $x_offset + 25, $y_offset + 41, $color, $font, $text);
 		}
+		if($flair_index > 0)
+		{
+			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$flair_index]->get_flair_file();
+			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$flair_index]->get_flair_file());
+			$xoff = 12 - $fwidth;
+			$yoff = 12 - $fheight;
+			$im = imagecreatefrompng($flair_image);
+			imagecopy($canvas, $im, $x_offset + 31 + $xoff, $y_offset + 3 + $yoff, 0, 0, $fwidth, $fheight);
+			imagedestroy($im);
+		}
+		if($lowerleft_flair_index > 0)
+		{
+			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index]->get_flair_file();
+			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index]->get_flair_file());
+			$xoff = 0;
+			$yoff = 45 - $fheight;
+			$im = imagecreatefrompng($flair_image);
+			imagecopy($canvas, $im, $x_offset + $xoff, $y_offset + $yoff, 0, 0, $fwidth, $fheight);
+			imagedestroy($im);
+			if($border_type == 3)
+			{
+				imageline($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 1, $frame);
+				imageline($canvas, $x_offset + 43, $y_offset + 1, $x_offset + 43, $y_offset + 43, $frame);
+				imageline($canvas, $x_offset + 43, $y_offset + 43, $x_offset + 22, $y_offset + 43, $frame);
+				imageline($canvas, $x_offset + 22, $y_offset + 43, $x_offset + 1, $y_offset + 22, $frame);
+				imageline($canvas, $x_offset + 1, $y_offset + 22, $x_offset + 1, $y_offset + 1, $frame);
+			}
+		}
 		// Draw the rectangle.  I was doing this with thickness, but I couldn't quite get a handle, so it's two rectangles.
 		if ($border_type == 0 || $border_type == 1) {
 			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);
 			imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $black);
+		}
+		if($border_type == 3)
+		{
+			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);
+			if($lowerleft_flair_index <= 0)
+			{
+				imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $frame);
+			}			
 		}
 		// If the border is 0, there's a blue highlight -- do that.
 		if ($border_type == 0) {
@@ -391,17 +427,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 					imageline($canvas, $x_offset, $y_offset + 44, $x_offset + 44, $y_offset + 44, $frame);
 				}
 			}
-		}
-		if($flair_index > 0)
-		{
-			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$flair_index]->get_flair_file();
-			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$flair_index]->get_flair_file());
-			$xoff = 12 - $fwidth;
-			$yoff = 12 - $fheight;
-			$im = imagecreatefrompng($flair_image);
-			imagecopy($canvas, $im, $x_offset + 31 + $xoff, $y_offset + 3 + $yoff, 0, 0, $fwidth, $fheight);
-			imagedestroy($im);
-		}
+		}		
 	}
 }
 $mysqli -> close();

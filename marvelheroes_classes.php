@@ -25,6 +25,14 @@ class MarvelFlair
 	public function set_flair_file($inval) {
 		$this->flair_file = $inval;
 	}
+	
+	private $flair_position = 0;
+	public function get_flair_position() {
+		return $this->flair_position;
+	}
+	public function set_flair_position($inval) {
+		$this->flair_position = $inval;
+	}
 }
 
 class MarvelHero
