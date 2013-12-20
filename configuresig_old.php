@@ -425,12 +425,19 @@ if (!empty($_POST)) {
 		$view_mode = 0;
 		$include_link = 1;
 		$font = 0;
-		while (!empty($_POST[$costume_name])) {
-			$token = str_pad($_POST[$costume_name], 2, "0", STR_PAD_LEFT) . substr(str_pad($_POST[$level_name], 3, "0", STR_PAD_LEFT), 0, 3);
-			$config_array = $config_array . $token;
-			$counter = $counter + 1;
+		for($counter=0; $counter < 29; $counter++)
+		{
 			$costume_name = "cos_" . strval($counter);
 			$level_name = "lev_" . strval($counter);
+			if(!empty($_POST[$costume_name]))
+			{
+				$token = str_pad($_POST[$costume_name], 2, "0", STR_PAD_LEFT) . substr(str_pad($_POST[$level_name], 3, "0", STR_PAD_LEFT), 0, 3);				
+			}
+			else
+			{
+				$token = "00000";
+			}
+			$config_array = $config_array . $token;
 		}
 		if (!empty($_POST['chars_per_row'])) {
 			$chars_per_row = intval($_POST['chars_per_row']);

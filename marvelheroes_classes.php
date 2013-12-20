@@ -33,6 +33,22 @@ class MarvelFlair
 	public function set_flair_position($inval) {
 		$this->flair_position = $inval;
 	}
+	
+	private $flair_x_offset = 0;
+	public function get_flair_x_offset() {
+		return $this->flair_x_offset;
+	}
+	public function set_flair_x_offset($inval) {
+		$this->flair_x_offset = $inval;
+	}
+	
+	private $flair_y_offset = 0;
+	public function get_flair_y_offset() {
+		return $this->flair_y_offset;
+	}
+	public function set_flair_y_offset($inval) {
+		$this->flair_y_offset = $inval;
+	}
 }
 
 class MarvelHero

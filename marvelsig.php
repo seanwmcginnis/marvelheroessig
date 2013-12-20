@@ -93,7 +93,7 @@ $border_type = 0;
 if (isset($_GET['border_type'])) {
 	$border_type = intval($_GET['border_type']);
 }
-if ($border_type > 3) {
+if ($border_type > 5) {
 	$border_type = 0;
 }
 
@@ -149,6 +149,8 @@ while ($myrow = $result -> fetch_assoc()) {
 	$newflair -> set_flair_index($flair_index);
 	$newflair -> set_flair_name($myrow['flair_name']);
 	$newflair -> set_flair_file($myrow['flair_file']);
+	$newflair -> set_flair_x_offset(intval($myrow['x_offset']));
+	$newflair -> set_flair_y_offset(intval($myrow['y_offset']));
 	$flair[$flair_index] = $newflair;
 }
 $result -> close();
@@ -223,10 +225,11 @@ $y_offset = 0;
 
 // Allocate a canvas to draw on
 $canvas = imagecreatetruecolor($image_width, $image_height);
-imagesavealpha($canvas, true);
+// imagesavealpha($canvas, true);
 
 // Make the canvas transparent
-$trans_colour = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+$trans_colour = imagecolorallocate($canvas, 231, 246, 255);
+imagecolortransparent($canvas, $trans_colour);
 imagefill($canvas, 0, 0, $trans_colour);
 
 // Allocate the colors we will need for the borders and the level numbers
@@ -336,8 +339,12 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 				}
 			}
 			$text = strval($level);
-			imagettftext($canvas, 12, 0, $x_offset + 24, $y_offset + 40, $black, $font, $text);
-			imagettftext($canvas, 12, 0, $x_offset + 25, $y_offset + 41, $color, $font, $text);
+			$box = imagettfbbox(12, 0, $font, $text);
+			$text_width = abs($box[4] - $box[0]);
+			$text_height = abs($box[5] - $box[1]);
+			imagettftext($canvas, 12, 0, $x_offset + 45 - $text_width - 4, $y_offset + 42, $black, $font, $text);
+			imagettftext($canvas, 12, 0, $x_offset + 45 - $text_width - 4, $y_offset + 41, $color, $font, $text);
+			// imagettftext($canvas, 12, 0, $x_offset + 25, $y_offset + 41, $color, $font, $text);
 		}
 		if($flair_index > 0)
 		{
@@ -349,37 +356,50 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			imagecopy($canvas, $im, $x_offset + 31 + $xoff, $y_offset + 3 + $yoff, 0, 0, $fwidth, $fheight);
 			imagedestroy($im);
 		}
+		$line_drawn = 0;
 		if($lowerleft_flair_index > 0)
 		{
 			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index]->get_flair_file();
 			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index]->get_flair_file());
-			$xoff = 0;
-			$yoff = 45 - $fheight;
+			$xoff = 0 + $flair[$lowerleft_flair_index]->get_flair_x_offset();
+			$yoff = 45 - $fheight - $flair[$lowerleft_flair_index]->get_flair_y_offset();			
 			$im = imagecreatefrompng($flair_image);
 			imagecopy($canvas, $im, $x_offset + $xoff, $y_offset + $yoff, 0, 0, $fwidth, $fheight);
-			imagedestroy($im);
-			if($border_type == 3)
-			{
-				imageline($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 1, $frame);
-				imageline($canvas, $x_offset + 43, $y_offset + 1, $x_offset + 43, $y_offset + 43, $frame);
-				imageline($canvas, $x_offset + 43, $y_offset + 43, $x_offset + 22, $y_offset + 43, $frame);
-				imageline($canvas, $x_offset + 22, $y_offset + 43, $x_offset + 1, $y_offset + 22, $frame);
-				imageline($canvas, $x_offset + 1, $y_offset + 22, $x_offset + 1, $y_offset + 1, $frame);
-			}
+			imagedestroy($im);			
 		}
 		// Draw the rectangle.  I was doing this with thickness, but I couldn't quite get a handle, so it's two rectangles.
 		if ($border_type == 0 || $border_type == 1) {
 			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);
 			imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $black);
 		}
+		if($border_type == 4 || $border_type == 5)
+		{
+			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $trans_colour);
+			imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $trans_colour);
+		}
 		if($border_type == 3)
 		{
-			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);
-			if($lowerleft_flair_index <= 0)
+			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);					
+		}
+		if($lowerleft_flair_index > 0)
+		{
+			if(($border_type == 3 || $border_type == 5) && $flair[$lowerleft_flair_index]->get_flair_y_offset() == 0 && $flair[$lowerleft_flair_index]->get_flair_x_offset() == 0)
+			{
+				imageline($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 1, $frame);
+				imageline($canvas, $x_offset + 43, $y_offset + 1, $x_offset + 43, $y_offset + 43, $frame);
+				imageline($canvas, $x_offset + 43, $y_offset + 43, $x_offset + 22, $y_offset + 43, $frame);
+				imageline($canvas, $x_offset + 22, $y_offset + 43, $x_offset + 1, $y_offset + 22, $frame);
+				imageline($canvas, $x_offset + 1, $y_offset + 22, $x_offset + 1, $y_offset + 1, $frame);
+				$line_drawn = 1;
+			}
+		}
+		if($border_type == 3 || $border_type == 5)
+		{
+			if($lowerleft_flair_index <= 0 || $line_drawn == 0 || $border_type == 5)
 			{
 				imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $frame);
-			}			
-		}
+			}
+		}		
 		// If the border is 0, there's a blue highlight -- do that.
 		if ($border_type == 0) {
 			// If the image is square, just draw the edges.

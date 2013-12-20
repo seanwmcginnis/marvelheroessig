@@ -1,4 +1,4 @@
-function MarvelHero(char_index, home_x, home_y, grid_tag, myButton, myMenu, myLevel, myWhite, myGreen, myBlue, myPurple, myOrange, myRed, myFlair, myLevelLabel, myFlairImage, mySource, mySourceImage)
+function MarvelHero(char_index, home_x, home_y, grid_tag, myButton, myMenu, myLevel, myWhite, myGreen, myBlue, myPurple, myOrange, myRed, myFlair, myLevelLabel, myFlairImage, mySource, mySourceImage, myLink)
 {
 	this.char_index = char_index;
 	this.home_x = home_x;
@@ -26,12 +26,16 @@ function MarvelHero(char_index, home_x, home_y, grid_tag, myButton, myMenu, myLe
 	this.myFlairImage = myFlairImage;
 	this.mySource = mySource;
 	this.mySourceImage = mySourceImage;
+	this.link = "";
+	this.myLink = myLink;
 }
 
-function MarvelFlair(flair_index, flair_name, flair_file, flair_position)
+function MarvelFlair(flair_index, flair_name, flair_file, flair_position, x_offset, y_offset)
 {
 	this.flair_index = flair_index;
 	this.flair_name = flair_name;
 	this.flair_file = flair_file;
 	this.flair_position = flair_position;
+	this.x_offset = x_offset;
+	this.y_offset = y_offset;
 }
