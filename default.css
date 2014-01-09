@@ -54,6 +54,24 @@ h5 {
 	z-index: 30;
 }
 
+.Flair2Area {
+	background-color: #BFBDBD;
+	border: solid 1px #BFBDBD;
+	color: #000000;
+	height: 18px;
+	padding-left: 10px;
+	width: 80px;
+	box-shadow: 2px 2px 0 #828181 inset;
+	border: 0;
+	border-radius: 5px;
+	font-family: Sansation, Arial;
+	font-size: 10px;
+	position: absolute;
+	left: 332px;
+	top: 8.75px;
+	z-index: 30;
+}
+
 .LevelArea {
 	left: 8.75px;
 	top: 8.75px;
@@ -159,6 +177,10 @@ h5 {
 }
 
 .source_image {
+	position: absolute;
+}
+
+.flair2_image {
 	position: absolute;
 }
 

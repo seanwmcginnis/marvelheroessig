@@ -1,27 +1,27 @@
 <?php
 
-/* 
+/*
  *  Interactive Marvel Heroes Forum Signature Generator
-    Copyright (C) 2013 Sean McGinnis
+ Copyright (C) 2013 Sean McGinnis
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
- /*
-  * marvelsig.php: This is the module that renders the image.  The output is a PNG file.
-  */
-  
+
+/*
+ * marvelsig.php: This is the module that renders the image.  The output is a PNG file.
+ */
+
 // Include the convenience class for storing character data
 require_once ('marvelheroes_classes.php');
 // Include the convenience class for grabbing global values from the php.ini file.
@@ -34,14 +34,106 @@ $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, "marvelheroesdb");
 function customError($errno, $errstr) {
 	echo "<b>Error:</b> [$errno] $errstr<br>";
 	echo "Ending Script";
-	global $flair;
-	print_r($flair);
+	var_dump(debug_backtrace());
 	die();
 }
-set_error_handler("customError");
+
+function process_error_backtrace($errno, $errstr, $errfile, $errline, $errcontext) {
+	if (!(error_reporting() & $errno))
+		return;
+	switch($errno) {
+		case E_WARNING :
+		case E_USER_WARNING :
+		case E_STRICT :
+		case E_NOTICE :
+		case E_USER_NOTICE :
+			$type = 'warning';
+			$fatal = false;
+			break;
+		default :
+			$type = 'fatal error';
+			$fatal = true;
+			break;
+	}
+	$trace = array_reverse(debug_backtrace());
+	array_pop($trace);
+	if (php_sapi_name() == 'cli') {
+		echo 'Backtrace from ' . $type . ' \'' . $errstr . '\' at ' . $errfile . ' ' . $errline . ':' . "\n";
+		foreach ($trace as $item)
+			echo '  ' . (isset($item['file']) ? $item['file'] : '<unknown file>') . ' ' . (isset($item['line']) ? $item['line'] : '<unknown line>') . ' calling ' . $item['function'] . '()' . "\n";
+	} else {
+		echo '<p class="error_backtrace">' . "\n";
+		echo '  Backtrace from ' . $type . ' \'' . $errstr . '\' at ' . $errfile . ' ' . $errline . ':' . "\n";
+		echo '  <ol>' . "\n";
+		foreach ($trace as $item)
+			echo '    <li>' . (isset($item['file']) ? $item['file'] : '<unknown file>') . ' ' . (isset($item['line']) ? $item['line'] : '<unknown line>') . ' calling ' . $item['function'] . '()</li>' . "\n";
+		echo '  </ol>' . "\n";
+		echo '</p>' . "\n";
+	}
+	if (ini_get('log_errors')) {
+		$items = array();
+		foreach ($trace as $item)
+			$items[] = (isset($item['file']) ? $item['file'] : '<unknown file>') . ' ' . (isset($item['line']) ? $item['line'] : '<unknown line>') . ' calling ' . $item['function'] . '()';
+		$message = 'Backtrace from ' . $type . ' \'' . $errstr . '\' at ' . $errfile . ' ' . $errline . ': ' . join(' | ', $items);
+		error_log($message);
+	}
+	if ($fatal)
+		exit(1);
+}
+
+set_error_handler('process_error_backtrace');
+
+function convertStringWithPadding($str, $old_token_length, $new_token_length) {
+	$ret = "";
+	$index = 0;
+	while ($index < strlen($str)) {
+		$token = substr($str, $index, $old_token_length);
+		$ret = $ret . str_pad($token, $new_token_length, "0", STR_PAD_LEFT);
+		$index += $old_token_length;
+	}
+	return $ret;
+}
+
+function HEX2RGB($color) {
+	$color = str_replace("#", "", $color);
+	$color_array = array();
+	$hex_color = strtoupper($color);
+	for ($i = 0; $i < 6; $i++) {
+		$hex = substr($hex_color, $i, 1);
+		switch($hex) {
+			case "A" :
+				$num = 10;
+				break;
+			case "B" :
+				$num = 11;
+				break;
+			case "C" :
+				$num = 12;
+				break;
+			case "D" :
+				$num = 13;
+				break;
+			case "E" :
+				$num = 14;
+				break;
+			case "F" :
+				$num = 15;
+				break;
+			default :
+				$num = $hex;
+				break;
+		}
+		array_push($color_array, $num);
+	}
+	$R = (($color_array[0] * 16) + $color_array[1]);
+	$G = (($color_array[2] * 16) + $color_array[3]);
+	$B = (($color_array[4] * 16) + $color_array[5]);
+	return array($R, $G, $B);
+	unset($color_array, $hex, $R, $G, $B);
+}
 
 // Parse the parameters out of the URL
-// For the purposes of this whole file, char_index is a number indicating the character's position in any array.  It is necessarily independent of display order.  So, for exampke, 0 is Black Panther, 1 is Black Widow, and so on. 
+// For the purposes of this whole file, char_index is a number indicating the character's position in any array.  It is necessarily independent of display order.  So, for exampke, 0 is Black Panther, 1 is Black Widow, and so on.
 
 // The config_string stored the costume and level information in version 1.  It is supported retroactively, but converted to the newer position/costume/level grids.
 $config_string = "";
@@ -97,10 +189,21 @@ if ($border_type > 5) {
 	$border_type = 0;
 }
 
+// $border_color determines what color borders are drawn around the character portraits.
+$border_color = "";
+if (isset($_GET['border_color'])) {
+	$border_color = $_GET['border_color'];
+}
+
 // The numeric index of the font used to draw the level numbers.  This is a table in the database that stores the index and the path to the ttf file.
 $font_index = 0;
 if (isset($_GET['font'])) {
 	$font_index = intval($_GET['font']);
+}
+
+$version = 0;
+if (isset($_GET['version'])) {
+	$version = intval($_GET['version']);
 }
 
 // Okay, first thing: load all characters into an array.
@@ -162,11 +265,11 @@ $level = 0;
 // If there is a keyword, load the config from the database.  This is pretty straightforward.
 
 if ($keyword != NULL && strlen($keyword) > 0) {
-	$query = "SELECT config, chars_per_row, view_mode, font, position_grid, level_grid, costume_grid, border_type, flair_grid FROM saved_config WHERE keyword=?";
+	$query = "SELECT config, chars_per_row, view_mode, font, position_grid, level_grid, costume_grid, border_type, flair_grid, border_color, version FROM saved_config WHERE keyword=?";
 	$stmt = $mysqli -> prepare($query);
 	$stmt -> bind_param("s", $keyword);
 	$stmt -> execute();
-	$stmt -> bind_result($db_config, $db_chars_per_row, $db_view_mode, $db_font_index, $db_position_grid, $db_level_grid, $db_costume_grid, $db_border_type, $db_flair_grid);
+	$stmt -> bind_result($db_config, $db_chars_per_row, $db_view_mode, $db_font_index, $db_position_grid, $db_level_grid, $db_costume_grid, $db_border_type, $db_flair_grid, $db_border_color, $db_version);
 	$stmt -> fetch();
 	$config_string = $db_config;
 	if (!empty($db_view_mode)) {
@@ -190,6 +293,12 @@ if ($keyword != NULL && strlen($keyword) > 0) {
 	if (!empty($db_flair_grid)) {
 		$flair_grid = $db_flair_grid;
 	}
+	if (!empty($db_border_color)) {
+		$border_color = $db_border_color;
+	}
+	if (!empty($db_version)) {
+		$version = intval($db_version);
+	}
 	$stmt -> close();
 }
 
@@ -199,6 +308,10 @@ if (strlen($config_string) > 0 && strlen($position_grid) <= 0) {
 }
 
 $num_characters = count($characters);
+if ($version == 0) {
+	$flair_grid = convertStringWithPadding($flair_grid, 2, 3);
+}
+
 $grid_width = 0;
 $grid_height = 0;
 // Determine the grid dimensions by iterating through the position grid and finding the max X and Y coordinates.
@@ -241,6 +354,11 @@ $purple = imagecolorallocate($canvas, 203, 0, 254);
 $orange = imagecolorallocate($canvas, 250, 95, 3);
 $red = imagecolorallocate($canvas, 254, 0, 0);
 $frame = imagecolorallocate($canvas, 0, 170, 255);
+if (strlen($border_color) > 0) {
+	$colors = HEX2RGB($border_color);
+	$frame = imagecolorallocate($canvas, $colors[0], $colors[1], $colors[2]);
+}
+
 $font = 'fonts/arialbd.ttf';
 // Load the font that was passed in (if it exists)
 if ($font_index > 0) {
@@ -264,18 +382,15 @@ $flair_image = "";
 // Iterate over the grid squares
 for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 	for ($x_grid = 0; $x_grid < $grid_width; $x_grid++) {
-		$imagefile = "";		
+		$imagefile = "";
 		// Create a grid_tag, which is the 6-character code for this square.
 		$grid_tag = "X" . str_pad(strval($x_grid), 2, "0", STR_PAD_LEFT) . "Y" . str_pad(strval($y_grid), 2, "0", STR_PAD_LEFT);
 		$char_index = -1;
 		// String magic: the char index is the position of the grid tag in the position grid, divided by 6.  If it's false, then the grid square is empty.
-		if(strpos($position_grid, $grid_tag) === false)
-		{
+		if (strpos($position_grid, $grid_tag) === false) {
 			$char_index = -1;
-		}
-		else
-		{
-			$char_index = strpos($position_grid, $grid_tag)/6;		
+		} else {
+			$char_index = strpos($position_grid, $grid_tag) / 6;
 		}
 		// Find the character with this char index; ideally, this would just be the index into the character list, but there's an issue I haven't quite fixed that requires me to load the characters in display order.
 		$char_i = 0;
@@ -287,6 +402,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 		$level = -1;
 		$flair_index = 0;
 		$lowerleft_flair_index = 0;
+		$upperleft_flair_index = 0;
 		// If there is no character, load a blank image.
 		if ($char_index < 0) {
 			if ($view_mode == 0) {
@@ -301,8 +417,10 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 				}
 			}
 			$level = intval(getGridValue($level_grid, $char_index, 3));
-			$flair_index = intval(getGridValue($flair_grid, $char_index, 2));
-			$lowerleft_flair_index = intval(getGridValue($flair_grid, $num_characters + $char_index, 2));
+
+			$flair_index = intval(getGridValue($flair_grid, $char_index, 3));
+			$lowerleft_flair_index = intval(getGridValue($flair_grid, $num_characters + $char_index, 3));
+			$upperleft_flair_index = intval(getGridValue($flair_grid, (2 * $num_characters) + $char_index, 3));
 		}
 
 		// Calculate drawing coordinates
@@ -311,7 +429,10 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 		// Draw the character portrait.
 		if (strlen($imagefile) > 0) {
 			$im = imagecreatefromjpeg($imagefile);
-			imagecopy($canvas, $im, $x_offset, $y_offset, 0, 0, 45, 45);
+			if ($border_type == 4 || $border_type == 5) {
+				imagecopy($canvas, $im, $x_offset + 1, $y_offset + 1, 1, 1, 43, 43);
+			} else {imagecopy($canvas, $im, $x_offset, $y_offset, 0, 0, 45, 45);
+			}
 			imagedestroy($im);
 		} else {
 			continue;
@@ -346,10 +467,9 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			imagettftext($canvas, 12, 0, $x_offset + 45 - $text_width - 4, $y_offset + 41, $color, $font, $text);
 			// imagettftext($canvas, 12, 0, $x_offset + 25, $y_offset + 41, $color, $font, $text);
 		}
-		if($flair_index > 0)
-		{
-			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$flair_index]->get_flair_file();
-			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$flair_index]->get_flair_file());
+		if ($flair_index > 0) {
+			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$flair_index] -> get_flair_file();
+			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$flair_index] -> get_flair_file());
 			$xoff = 12 - $fwidth;
 			$yoff = 12 - $fheight;
 			$im = imagecreatefrompng($flair_image);
@@ -357,34 +477,50 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			imagedestroy($im);
 		}
 		$line_drawn = 0;
-		if($lowerleft_flair_index > 0)
-		{
-			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index]->get_flair_file();
-			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index]->get_flair_file());
-			$xoff = 0 + $flair[$lowerleft_flair_index]->get_flair_x_offset();
-			$yoff = 45 - $fheight - $flair[$lowerleft_flair_index]->get_flair_y_offset();			
+		if ($lowerleft_flair_index > 0) {
+			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index] -> get_flair_file();
+			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index] -> get_flair_file());
+			$xoff = 0 + $flair[$lowerleft_flair_index] -> get_flair_x_offset();
+			$yoff = 45 - $fheight - $flair[$lowerleft_flair_index] -> get_flair_y_offset();
 			$im = imagecreatefrompng($flair_image);
-			imagecopy($canvas, $im, $x_offset + $xoff, $y_offset + $yoff, 0, 0, $fwidth, $fheight);
-			imagedestroy($im);			
+			if ($border_type == 4 || $border_type == 5) {
+				if($xoff == 0)
+				{
+					imagecopy($canvas, $im, $x_offset + $xoff + 1, $y_offset + $yoff - 1, 1, 1, $fwidth - 1, $fheight - 1);
+				}
+				else
+				{
+					imagecopy($canvas, $im, $x_offset + $xoff, $y_offset + $yoff, 0, 0, $fwidth, $fheight);	
+				}				
+			}
+			else {
+				imagecopy($canvas, $im, $x_offset + $xoff, $y_offset + $yoff, 0, 0, $fwidth, $fheight);
+			}			
+			imagedestroy($im);
+		}
+		if ($upperleft_flair_index > 0) {
+			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$upperleft_flair_index] -> get_flair_file();
+			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$upperleft_flair_index] -> get_flair_file());
+			$xoff = 12 - $fwidth;
+			$yoff = 12 - $fheight;
+			$im = imagecreatefrompng($flair_image);
+			imagecopy($canvas, $im, $x_offset + 2 + $xoff, $y_offset + 3 + $yoff, 0, 0, $fwidth, $fheight);
+			imagedestroy($im);
 		}
 		// Draw the rectangle.  I was doing this with thickness, but I couldn't quite get a handle, so it's two rectangles.
 		if ($border_type == 0 || $border_type == 1) {
 			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);
 			imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $black);
 		}
-		if($border_type == 4 || $border_type == 5)
-		{
-			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $trans_colour);
-			imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $trans_colour);
+		/*if ($border_type == 4 || $border_type == 5) {
+		 imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $trans_colour);
+		 imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $trans_colour);
+		 }*/
+		if ($border_type == 3) {
+			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);
 		}
-		if($border_type == 3)
-		{
-			imagerectangle($canvas, $x_offset, $y_offset, $x_offset + 44, $y_offset + 44, $black);					
-		}
-		if($lowerleft_flair_index > 0)
-		{
-			if(($border_type == 3 || $border_type == 5) && $flair[$lowerleft_flair_index]->get_flair_y_offset() == 0 && $flair[$lowerleft_flair_index]->get_flair_x_offset() == 0)
-			{
+		if ($lowerleft_flair_index > 0) {
+			if (($border_type == 3 || $border_type == 5) && $flair[$lowerleft_flair_index] -> get_flair_y_offset() == 0 && $flair[$lowerleft_flair_index] -> get_flair_x_offset() == 0) {
 				imageline($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 1, $frame);
 				imageline($canvas, $x_offset + 43, $y_offset + 1, $x_offset + 43, $y_offset + 43, $frame);
 				imageline($canvas, $x_offset + 43, $y_offset + 43, $x_offset + 22, $y_offset + 43, $frame);
@@ -393,13 +529,11 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 				$line_drawn = 1;
 			}
 		}
-		if($border_type == 3 || $border_type == 5)
-		{
-			if($lowerleft_flair_index <= 0 || $line_drawn == 0 || $border_type == 5)
-			{
+		if ($border_type == 3 || $border_type == 5) {
+			if ($lowerleft_flair_index <= 0 || $line_drawn == 0 || $border_type == 5) {
 				imagerectangle($canvas, $x_offset + 1, $y_offset + 1, $x_offset + 43, $y_offset + 43, $frame);
 			}
-		}		
+		}
 		// If the border is 0, there's a blue highlight -- do that.
 		if ($border_type == 0) {
 			// If the image is square, just draw the edges.
@@ -447,7 +581,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 					imageline($canvas, $x_offset, $y_offset + 44, $x_offset + 44, $y_offset + 44, $frame);
 				}
 			}
-		}		
+		}
 	}
 }
 $mysqli -> close();
