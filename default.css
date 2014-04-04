@@ -31,7 +31,7 @@ h5 {
 	font-family: Sansation, Arial;
 	font-size: 10px;
 	position: absolute;
-	left: 162px;
+	left: 182px;
 	top: 8.75px;
 	z-index: 30;
 }
@@ -49,7 +49,7 @@ h5 {
 	font-family: Sansation, Arial;
 	font-size: 10px;
 	position: absolute;
-	left: 247px;
+	left: 267px;
 	top: 8.75px;
 	z-index: 30;
 }
@@ -67,7 +67,7 @@ h5 {
 	font-family: Sansation, Arial;
 	font-size: 10px;
 	position: absolute;
-	left: 332px;
+	left: 352px;
 	top: 8.75px;
 	z-index: 30;
 }
@@ -172,6 +172,17 @@ h5 {
 	top: 10px;
 }
 
+.yellowButton {
+	padding: 0px 0px 0px 0px;
+	position: absolute;
+	width: 15px;
+	height: 15px;
+	z-index: 20;
+	left: 162px;
+	top: 10px;
+}
+
+
 .flair_image {
 	position: absolute;
 }
@@ -221,6 +232,13 @@ h5 {
 
 .prestige_level_5 {
 	color: rgba(254, 0, 0, 1);
+	font-family: Sansation, Arial;
+	font-size: 12px;
+	position: absolute;
+}
+
+.prestige_level_6 {
+	color: rgba(244, 205, 49, 1);
 	font-family: Sansation, Arial;
 	font-size: 12px;
 	position: absolute;

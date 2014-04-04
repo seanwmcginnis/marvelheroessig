@@ -1,4 +1,4 @@
-function MarvelHero(char_index, home_x, home_y, grid_tag, myButton, myMenu, myLevel, myWhite, myGreen, myBlue, myPurple, myOrange, myRed, myFlair, myLevelLabel, myFlairImage, mySource, mySourceImage, myLink, myFlair2, myFlair2Image)
+function MarvelHero(char_index, home_x, home_y, grid_tag, myButton, myMenu, myLevel, myWhite, myGreen, myBlue, myPurple, myOrange, myRed, myYellow, myFlair, myLevelLabel, myFlairImage, mySource, mySourceImage, myLink, myFlair2, myFlair2Image)
 {
 	this.char_index = char_index;
 	this.home_x = home_x;
@@ -13,6 +13,7 @@ function MarvelHero(char_index, home_x, home_y, grid_tag, myButton, myMenu, myLe
 	this.myPurple = myPurple;
 	this.myOrange = myOrange;
 	this.myRed = myRed;
+	this.myYellow = myYellow;
 	this.level = 0;
 	this.costume = 0;
 	this.prestige = 0;

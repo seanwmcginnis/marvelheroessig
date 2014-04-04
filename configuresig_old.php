@@ -425,7 +425,7 @@ if (!empty($_POST)) {
 		$view_mode = 0;
 		$include_link = 1;
 		$font = 0;
-		for($counter=0; $counter < 29; $counter++)
+		for($counter=0; $counter < 31; $counter++)
 		{
 			$costume_name = "cos_" . strval($counter);
 			$level_name = "lev_" . strval($counter);

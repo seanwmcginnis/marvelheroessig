@@ -34,6 +34,7 @@
 
 // This bit is for setting cookies, which has to be done before the page renders.
 include 'marvelheroes_config.php';
+require_once ('marvelheroes_classes.php');
 
 if (!empty($_POST["action"])) {
 	if ($_POST["action"] == "save") {
@@ -48,12 +49,12 @@ if (!empty($_POST["action"])) {
 <html>
 	<head>
 		<title>Configure Marvel Heroes Custom Sig</title>
-		<link rel="stylesheet" href="default.css?version=2.6.1" type="text/css">
+		<link rel="stylesheet" href="default.css?version=2.8.0" type="text/css">
 		<meta http-equiv="Content-Type" content="text/html; ">
 		<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
 		<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 		<script src="jquery.ui.touch-punch.min.js"></script>
-		<script src="marvelheroes_classes.js?version=2.6.1"></script>
+		<script src="marvelheroes_classes.js?version=2.8.0"></script>
 		<script type="text/javascript" src="jscolor/jscolor.js"></script>
 		<script>
 			// V1 was all PHP.  This one is mostly jQuery.  Good stuff -- a lot less load on the server, and a better end-user experience.
@@ -89,8 +90,7 @@ if (!empty($_POST["action"])) {
 			}
 
 			// This function builds the markdown code, which is actually no longer markdown, but rather straight HTML
-			function buildMarkdown() {
-				console.log("Action is: " + $("#action").val());
+			function buildMarkdown() {				
 				// Check to see if the sig is dirty (that is, has been modified and not saved).  If the sig has been saved and not subsequently modified, then the "action" field will read "save".
 				var save_by_keyword = $("#action").val() == "save";
 				// Get the settings from the UI fields.  These setting are covered in the sig-generation code.
@@ -102,9 +102,10 @@ if (!empty($_POST["action"])) {
 				var costume_grid = $("#costume_grid").val();
 				var flair_grid = $("#flair_grid").val();
 				var level_grid = $("#level_grid").val();
+				var half_grids = $("#half_grids").val();
 
 				var links = $("#link_grid").val().split("|");
-				
+
 				var keyword = $("#saved_keyword").val();
 				// Except these two.  include_link determines whether a link to my thread on the forums should be included in the markdown
 				var include_link = $("#include_link").val();
@@ -117,7 +118,7 @@ if (!empty($_POST["action"])) {
 					url = "http://www.seanwmcginnis.com/marvelheroes/marvelsig.php?keyword=" + keyword;
 				} else {
 					// Otherwise, all of the grids and parameters need to go into the URL
-					url = "http://www.seanwmcginnis.com/marvelheroes/marvelsig.php?position_grid=" + position_grid + "&level_grid=" + level_grid + "&costume_grid=" + costume_grid + "&flair_grid=" + flair_grid + "&version=1";
+					url = "http://www.seanwmcginnis.com/marvelheroes/marvelsig.php?position_grid=" + position_grid + "&level_grid=" + level_grid + "&costume_grid=" + costume_grid + "&flair_grid=" + flair_grid + "&version=2";
 					;
 					if (font != null) {
 						url = url + "&font=" + font.toString();
@@ -130,6 +131,9 @@ if (!empty($_POST["action"])) {
 					}
 					if (border_color != null) {
 						url = url + "&border_color=" + border_color;
+					}
+					if (half_grids != null) {
+						url = url + "&half_grids=" + half_grids;
 					}
 				}
 				// Begin the markdown with the image itself
@@ -217,9 +221,9 @@ if (!empty($_POST["action"])) {
 				var level_grid = $("#level_grid").val();
 				var border_type = $("#border_type").val();
 				var border_color = $("#border_color").val();
-				
+				var half_grids = $("#half_grids").val();
 				// Build the URL.
-				var url = "marvelsig.php?position_grid=" + position_grid + "&level_grid=" + level_grid + "&costume_grid=" + costume_grid + "&flair_grid=" + flair_grid + "&version=1";
+				var url = "marvelsig.php?position_grid=" + position_grid + "&level_grid=" + level_grid + "&costume_grid=" + costume_grid + "&flair_grid=" + flair_grid + "&version=2";
 				if (font != null) {
 					url = url + "&font=" + font.toString();
 				}
@@ -231,6 +235,9 @@ if (!empty($_POST["action"])) {
 				}
 				if (border_color != null) {
 					url = url + "&border_color=" + border_color;
+				}
+				if (half_grids != null) {
+					url = url + "&half_grids=" + half_grids;
 				}
 				// This is the title; I was too lazy to make a div-inside-a-div for this.
 				var title = "<div class='titleclause'>Preview</div>";
@@ -255,15 +262,10 @@ if (!empty($_POST["action"])) {
 					new_costume_grid = new_costume_grid + pad(characters[i].costume.toString(), 2);
 					var level = characters[i].level + (60 * characters[i].prestige);
 					new_level_grid = new_level_grid + pad(level.toString(), 3);
-					new_flair_grid = new_flair_grid + pad(characters[i].flair.toString(), 3);
+					new_flair_grid = new_flair_grid + pad(characters[i].flair.toString(), 3) + pad(characters[i].source.toString(), 3) + pad(characters[i].flair2.toString(), 3) + "000";
 					new_link_grid = new_link_grid + characters[i].link + "|";
 				}
-				for ( i = 0; i < characters.length; i++) {
-					new_flair_grid = new_flair_grid + pad(characters[i].source.toString(), 3);
-				}
-				for ( i = 0; i < characters.length; i++) {
-					new_flair_grid = new_flair_grid + pad(characters[i].flair2.toString(), 3);
-				}
+
 				// Set the hidden fields
 				$("#position_grid").val(new_position_grid);
 				$("#costume_grid").val(new_costume_grid);
@@ -327,7 +329,7 @@ if (!empty($_POST["action"])) {
 				var costume_grid = $("#costume_grid").val();
 				var flair_grid = $("#flair_grid").val();
 				var links = $("#link_grid").val().split("|");
-				
+
 				var num_chars = position_grid.length / 6;
 				var char_names = $("#char_names").val().split(";");
 				console.log($("#link_grid").val());
@@ -355,12 +357,14 @@ if (!empty($_POST["action"])) {
 					var purple_name = "#" + char_index + "_purple";
 					var orange_name = "#" + char_index + "_orange";
 					var red_name = "#" + char_index + "_red";
+					var yellow_name = "#" + char_index + "_yellow";
+					
 					var flair_name = "#" + char_index + "_flair";
 					var flair2_name = "#" + char_index + "_flair2";
 					var source_name = "#" + char_index + "_source";
 					var flairimage_name = "#" + char_index + "_flairimage";
 					var flair2image_name = "#" + char_index + "_flair2image";
-					
+
 					var sourceimage_name = "#" + char_index + "_sourceimage";
 					var link_name = "#" + char_index + "_link";
 					// Create a grid tag.
@@ -373,7 +377,7 @@ if (!empty($_POST["action"])) {
 					var home_x = parseFloat(home_chunk[0]);
 					var home_y = parseFloat(home_chunk[1]);
 					// Create a new hero.
-					var m = new MarvelHero(char_index, home_x, home_y, grid_tag, button_name, menu_name, level_name, white_name, green_name, blue_name, purple_name, orange_name, red_name, flair_name, levellabel_name, flairimage_name, source_name, sourceimage_name, link_name, flair2_name, flair2image_name);
+					var m = new MarvelHero(char_index, home_x, home_y, grid_tag, button_name, menu_name, level_name, white_name, green_name, blue_name, purple_name, orange_name, red_name, yellow_name, flair_name, levellabel_name, flairimage_name, source_name, sourceimage_name, link_name, flair2_name, flair2image_name);
 					var level_tag = getGridValue(level_grid, i, 3);
 					// Calculate the level and prestige level
 					if (level_tag != null) {
@@ -397,24 +401,24 @@ if (!empty($_POST["action"])) {
 						m.costume = parseInt(costume_tag, 10);
 					}
 					// Extract the flair
-					var flair_tag = getGridValue(flair_grid, i, 3);
+					var flair_tag = getGridValue(flair_grid, 4 * i, 3);
 					if (flair_tag != null) {
 						m.flair = parseInt(flair_tag, 10);
 					}
 
 					// Extract the source
-					var source_tag = getGridValue(flair_grid, num_chars + i, 3);
+					var source_tag = getGridValue(flair_grid, (4 * i) + 1, 3);
 					if (source_tag != null) {
 						m.source = parseInt(source_tag, 10);
 					}
 
 					// Extract the flair2
-					var flair2_tag = getGridValue(flair_grid, (2 * num_chars) + i, 3);
+					var flair2_tag = getGridValue(flair_grid, (4 * i) + 2, 3);
 					if (flair2_tag != null) {
 						m.flair2 = parseInt(flair2_tag, 10);
 					}
-					
-					m.char_name = char_names[i];					
+
+					m.char_name = char_names[i];
 					// Get the costume names and indices, which are delimited string (and live as arrays in the character object)
 					m.costume_names = cos_chunks[i].split("~");
 					m.costume_indices = cos_index_chunks[i].split("~");
@@ -511,9 +515,9 @@ if (!empty($_POST["action"])) {
 				// Set the flair index correctly
 				console.log("Setting flair to: " + hero.flair.toString());
 				$(hero.myFlair).val(hero.flair);
-				
+
 				$(hero.myFlair2).val(hero.flair2);
-				
+
 				// Set the flair index correctly
 				console.log("Setting source to: " + hero.source.toString());
 				$(hero.mySource).val(hero.source);
@@ -539,31 +543,26 @@ if (!empty($_POST["action"])) {
 				// You'll see the above a lot; I based the render code on the hidden fields, so most of these functions just save and re-render, which cuts out a lot of work.
 			}
 
-			function renderFlair(char_index)
-			{
+			function renderFlair(char_index) {
 				var hero = characters[parseInt(char_index, 10)];
 				if (hero.flair > 0) {
 					for (var i = 0; i < flair.length; i++) {
 						if (flair[i].flair_index == hero.flair) {
 							$(hero.myFlairImage).attr("src", "glyphicons_free/glyphicons/png/" + flair[i].flair_file);
-							if(flair[i].flair_position == 1)
-							{
-								if(flair[i].x_offset == 0 && flair[i].y_offset == 0)
-								{
+							if (flair[i].flair_position == 1) {
+								if (flair[i].x_offset == 0 && flair[i].y_offset == 0) {
 									$(hero.myFlairImage).css({
 										left : 0,
 										top : 22,
-										bottom: 'auto'
+										bottom : 'auto'
 									});
-								}
-								else
-								{
+								} else {
 									$(hero.myFlairImage).css({
 										left : flair[i].x_offset,
 										bottom : 45 - flair[i].y_offset,
-										top: 'auto'
+										top : 'auto'
 									});
-								}							
+								}
 							}
 							$(hero.myFlairImage).show();
 							break;
@@ -572,30 +571,25 @@ if (!empty($_POST["action"])) {
 				} else {
 					$(hero.myFlairImage).hide();
 				}
-				if(hero.source > 0)
-				{
+				if (hero.source > 0) {
 					for (var i = 0; i < flair.length; i++) {
 						if (flair[i].flair_index == hero.source) {
 							$(hero.mySourceImage).attr("src", "glyphicons_free/glyphicons/png/" + flair[i].flair_file);
-							if(flair[i].flair_position == 1)
-							{
-								if(flair[i].x_offset == 0 && flair[i].y_offset == 0)
-								{
+							if (flair[i].flair_position == 1) {
+								if (flair[i].x_offset == 0 && flair[i].y_offset == 0) {
 									$(hero.mySourceImage).css({
 										left : 0,
 										top : 22,
-										bottom: 'auto'
+										bottom : 'auto'
 									});
-								}
-								else
-								{
+								} else {
 									console.log("Placing new source: " + flair[i].x_offset.toString() + "," + (45 - flair[i].y_offset).toString());
 									$(hero.mySourceImage).css({
 										left : flair[i].x_offset,
 										bottom : flair[i].y_offset,
-										top: 'auto'
+										top : 'auto'
 									});
-								}							
+								}
 							}
 							$(hero.mySourceImage).show();
 							break;
@@ -608,24 +602,20 @@ if (!empty($_POST["action"])) {
 					for (var i = 0; i < flair.length; i++) {
 						if (flair[i].flair_index == hero.flair2) {
 							$(hero.myFlair2Image).attr("src", "glyphicons_free/glyphicons/png/" + flair[i].flair_file);
-							if(flair[i].flair_position == 1)
-							{
-								if(flair[i].x_offset == 0 && flair[i].y_offset == 0)
-								{
+							if (flair[i].flair_position == 1) {
+								if (flair[i].x_offset == 0 && flair[i].y_offset == 0) {
 									$(hero.myFlair2Image).css({
 										left : 0,
 										top : 22,
-										bottom: 'auto'
+										bottom : 'auto'
 									});
-								}
-								else
-								{
+								} else {
 									$(hero.myFlair2Image).css({
 										left : flair[i].x_offset,
 										top : flair[i].y_offset,
-										bottom: 'auto'
+										bottom : 'auto'
 									});
-								}							
+								}
 							}
 							$(hero.myFlair2Image).show();
 							break;
@@ -635,7 +625,7 @@ if (!empty($_POST["action"])) {
 					$(hero.myFlair2Image).hide();
 				}
 			}
-			
+
 			function flairChange(char_index) {
 				console.log("Flair changed!");
 				var hero = characters[parseInt(char_index, 10)];
@@ -651,13 +641,13 @@ if (!empty($_POST["action"])) {
 				hero.flair2 = flair2_index;
 				renderFlair(char_index);
 			}
-			
+
 			function linkChange(char_index) {
 				console.log("Link changed!");
 				var hero = characters[parseInt(char_index, 10)];
 				hero.link = $(hero.myLink).val();
 			}
-			
+
 			function sourceChange(char_index) {
 				console.log("Source changed!");
 				var hero = characters[parseInt(char_index, 10)];
@@ -714,6 +704,13 @@ if (!empty($_POST["action"])) {
 				} else {
 					$(hero.myRed).attr("src", "images_new/ui_red_off.png");
 					$(hero.myLevelLabel).removeClass("prestige_level_5");
+				}
+				if (p_level == 6) {
+					$(hero.myYellow).attr("src", "images_new/ui_yellow_on.png");
+					$(hero.myLevelLabel).addClass("prestige_level_6");
+				} else {
+					$(hero.myYellow).attr("src", "images_new/ui_yellow_off.png");
+					$(hero.myLevelLabel).removeClass("prestige_level_6");
 				}
 			}
 
@@ -776,8 +773,8 @@ if (!empty($_POST["action"])) {
 			// Because everything is growing or shrinking or bopping about, we have to dynamically move elements.  You can see how this does it -- it just offsets the different y coordinates by the height of the above elements.
 			function positionElements() {
 				var outer_left = $(window).width() - $("#outerborder").width();
-			 	$("#outerborder").css({
-					left : outer_left/2
+				$("#outerborder").css({
+					left : outer_left / 2
 				});
 				var rows = parseInt($("#hidden_rows").val(), 10);
 				var cols = parseInt($("#hidden_cols").val(), 10);
@@ -859,6 +856,14 @@ if (!empty($_POST["action"])) {
 				var offset = inIndex * inGridCellSize;
 				var new_val = pad(inValue, inGridCellSize);
 				return inGrid.substr(0, offset) + new_val + inGrid.substr(offset + inGridCellSize);
+			}
+
+			function removeGridValue(inGrid, inIndex, inGridCellSize) {
+				if (inGrid.length <= (inIndex * inGridCellSize)) {
+					return null;
+				}
+				var offset = inIndex * inGridCellSize;
+				return inGrid.substr(0, offset) + inGrid.substr(offset + inGridCellSize);
 			}
 
 			// THis function handles what happens when a character is dragged and then dropped on the interface
@@ -953,6 +958,28 @@ if (!empty($_POST["action"])) {
 				buildGrid();
 			}
 
+			function toggleHalfWhole(evt) {				
+				var grid_tag = "X" + pad(evt.data.gridx.toString(), 2) + "Y" + pad(evt.data.gridy.toString(), 2);
+				var half_grids = $("#half_grids").val();
+
+				var index = 0;
+				var num_entries = half_grids.length / 6;
+				var found = false;
+				for ( index = 0; index < num_entries; index++) {
+					if (getGridValue(half_grids, index, 6) == grid_tag) {
+						half_grids = removeGridValue(half_grids, index, 6);
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					half_grids = half_grids + grid_tag;
+				}
+				$("#half_grids").val(half_grids);			
+				console.log("half_grids: " + half_grids);	
+				buildGrid();
+			}
+
 			// This is the render function.
 			function buildGrid() {
 				calculateGridSize();
@@ -962,6 +989,7 @@ if (!empty($_POST["action"])) {
 
 				var grid_cols = $("#hidden_cols").val();
 				var grid_rows = $("#hidden_rows").val();
+				var half_grids = $("#half_grids").val();
 
 				var rows = parseInt(grid_rows, 10);
 				var cols = parseInt(grid_cols, 10);
@@ -1046,8 +1074,27 @@ if (!empty($_POST["action"])) {
 						var id = grid_tag + "_gridblock";
 
 						var image_id = x.toString() + "_" + y.toString() + "_image";
-						var text = "<div class='GridButton' id='" + id + "' style='left:" + xoff.toString() + "px; top:" + yoff.toString() + "px;'><img id='image_id' class='CharacterImage' src='images_new/blank.jpg'  /></div>";
+						var text = "<div class='GridButton' id='" + id + "' style='left:" + xoff.toString() + "px; top:" + yoff.toString() + "px;'><img id='" + image_id + "' class='CharacterImage'";
+						if (half_grids.indexOf(grid_tag) >= 0) {
+							console.log("HALF!");
+							text = text + " src='images_new/half.jpg'";
+						} else {
+							text = text + " src='images_new/blank.jpg'";
+						}
+						text = text + " /></div>";
 						$("#outerborder").append(text);
+						if (!found) {
+							$("#" + image_id).bind("mouseup touchstart", {gridx: x, gridy: y}, function(evt) {			
+								toggleHalfWhole(evt);
+								evt.stopPropagation();
+							});
+							/*$("#" + image_id).click(function(evt) {		
+								console.log("FOOBY FOOG");						
+								toggleHalfWhole(x, y);
+								evt.stopPropagation();
+							});*/
+						}
+
 					}
 				}
 				positionElements();
@@ -1065,7 +1112,7 @@ if (!empty($_POST["action"])) {
 		</div>
 		<div id='version' name='version'>
 			<p>
-				2.6.1
+				2.8.0
 			</p>
 		</div>
 		<form id='marvelform' name='marvelform' method='post' action='configuresig.php'>
@@ -1151,20 +1198,6 @@ if (!empty($_POST["action"])) {
 			 </script>\n\n";*/
 		}
 
-function convertStringWithPadding($str, $old_token_length, $new_token_length)
-{
-	$ret = "";
-	$index = 0;
-	while($index < strlen($str))
-	{
-		$token = substr($str, $index, $old_token_length);
-		$ret = $ret . str_pad($token, $new_token_length, "0", STR_PAD_LEFT);
-		$index += $old_token_length;
-	}
-	return $ret;
-}
-
-
 		// Delete a cookie
 		function clearCookie($key) {
 			if (isset($_COOKIE[$key])) {
@@ -1172,16 +1205,6 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				setcookie('key', '', time() - 3600);
 				// empty value and old timestamp
 			}
-		}
-
-		// Oh!  Hey!  It's those grid functions again!
-		function setGridValue($inGrid, $inValue, $inIndex, $inGridCellSize) {
-			if (strlen($inGrid) <= ($inIndex * $inGridCellSize)) {
-				return $inGrid;
-			}
-			$offset = $inIndex * $inGridCellSize;
-			$new_val = str_pad($inValue, $inGridCellSize, "0", STR_PAD_LEFT);
-			return substr($inGrid, 0, $offset) . $new_val . substr($inGrid, $offset + $inGridCellSize);
 		}
 
 		// V1 stored a bunch of stuff in cookies.  We need to convert those to the new model.
@@ -1311,13 +1334,12 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 			}
 			$link_grid_len = substr_count($val, "|");
 			$num_pipes = $num_characters - $link_grid_len;
-			for($i=0; $i < $num_pipes; $i++)
-			{
+			for ($i = 0; $i < $num_pipes; $i++) {
 				$val = $val . "|";
 			}
-			
-			print "<textarea style='display:none' id='link_grid' name='link_grid'>$val</textarea>";
-			
+
+			print "			<textarea style='display:none' id='link_grid' name='link_grid'>$val</textarea>";
+
 			// Repeat with the level grid
 			$default_level_grid = "000";
 			for ($i = 1; $i < $num_characters; $i++) {
@@ -1333,9 +1355,9 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				$val = $val . "000";
 			}
 			print "
-			<input type='hidden' id='level_grid' name='level_grid' value='$val'>
+ <input type='hidden' id='level_grid' name='level_grid' value='$val'>
 			";
-			
+
 			// AND the display order map
 			$display_order = "";
 			for ($i = 0; $i < $num_characters; $i++) {
@@ -1364,32 +1386,50 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 			<input type='hidden' id='costume_grid' name='costume_grid' value='$val'>
 			";
 
+			// The version
+			$version = 2;
+			if (isset($_POST['version_tag'])) {
+				$version = intval($_POST['version_tag']);
+			} else if (isset($_COOKIE["marvelsig_version"])) {
+				$version = intval($_COOKIE['marvelsig_version']);
+			} else if (isset($_COOKIE["marvelsig_flair_grid"])) {
+				$version = 0;
+			}
+
 			// AND the flair grid
 			$default_flair_grid = "000";
-			for ($i = 1; $i < 3 * $num_characters; $i++) {
+			for ($i = 1; $i < 4 * $num_characters; $i++) {
 				$default_flair_grid = $default_flair_grid . "000";
 			}
 			$val = $default_flair_grid;
+
 			if (!empty($_POST['flair_grid'])) {
 				$val = $_POST['flair_grid'];
 			} else if (!empty($_COOKIE["marvelsig_flair_grid"])) {
-				$version = 0;
-				if(!empty($_COOKIE["marvelsig_version"]))
-				{
-					$version = intval($_COOKIE['marvelsig_version']);
-				}
 				$val = $_COOKIE['marvelsig_flair_grid'];
-				if($version < 1)
-				{
-					$val = convertStringWithPadding($val, 2, 3);
-				}
 			}
+			$val = convertLegacyFlairString($val, $version, $num_characters);
+			$version = 2;
 
 			while (strlen($val) < (4 * $num_characters)) {
 				$val = $val . "000";
 			}
 			print "
+			<input type='hidden' id='version_tag' name='version_tag' value='$version'>
+			";
+			print "
 			<input type='hidden' id='flair_grid' name='flair_grid' value='$val'>
+			";
+
+			$default_half_grids = "";
+			$val = $default_half_grids;
+			if (!empty($_POST['half_grids'])) {
+				$val = $_POST['half_grids'];
+			} else if (!empty($_COOKIE["marvelsig_half_grids"])) {
+				$val = $_COOKIE['marvelsig_half_grids'];
+			}
+			print "
+			<input type='hidden' id='half_grids' name='half_grids' value='$val'>
 			";
 
 			// This bit of business writes the home coordinates of the characters to the pen_coords arra.
@@ -1443,7 +1483,7 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 			$flair_positions = "";
 			$flair_x_offsets = "";
 			$flair_y_offsets = "";
-			
+
 			for ($i = 1; $i < count($flair); $i++) {
 				$flair_names = $flair_names . $flair[$i] -> get_flair_name() . ";";
 				$flair_indices = $flair_indices . $flair[$i] -> get_flair_index() . ";";
@@ -1507,6 +1547,7 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				$purple_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_purple";
 				$orange_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_orange";
 				$red_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_red";
+				$yellow_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_yellow";
 				$flair_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_flair";
 				$flair2_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_flair2";
 				$link_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_link";
@@ -1528,6 +1569,7 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				$ready_script = $ready_script . "$( '#$purple_name' ).click(function(evt) {prestigeChange($char_index, 3);evt.stopPropagation();});\n";
 				$ready_script = $ready_script . "$( '#$orange_name' ).click(function(evt) {prestigeChange($char_index, 4);evt.stopPropagation();});\n";
 				$ready_script = $ready_script . "$( '#$red_name' ).click(function(evt) {prestigeChange($char_index, 5);evt.stopPropagation();});\n";
+				$ready_script = $ready_script . "$( '#$yellow_name' ).click(function(evt) {prestigeChange($char_index, 6);evt.stopPropagation();});\n";
 			}
 			$ready_script = $ready_script . "});
 		</script>";
@@ -1576,15 +1618,19 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				$purple_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_purple";
 				$orange_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_orange";
 				$red_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_red";
+				$yellow_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_yellow";
 				$flair_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_flair";
 				$flair2_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_flair2";
 				$source_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_source";
 				$costume_menus = $costume_menus . "
-		<div class='CostumeMenu' id='$menu_name' style='width:415px; height:" . strval($yoff_costume + 26.75) . "px'>
+		<div class='CostumeMenu' id='$menu_name' style='width:435px; height:" . strval($yoff_costume + 26.75) . "px'>
 			";
 				$link_name = str_pad($char_index, 2, "0", STR_PAD_LEFT) . "_link";
 				$costume_menus = $costume_menus . "
-			<div class='LinkDiv' style='top:" . strval($yoff_costume) . "px'>Link:<input type='text' id='$link_name' name='$link_name' class='LinkArea' value='$link_val'></div>";
+			<div class='LinkDiv' style='top:" . strval($yoff_costume) . "px'>
+				Link:
+				<input type='text' id='$link_name' name='$link_name' class='LinkArea' value='$link_val'>
+			</div>";
 				$costume_menus = $costume_menus . "
 			<input type='text' id='$level_name' name='$level_name' class='LevelArea'>
 			";
@@ -1594,6 +1640,7 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				$costume_menus = $costume_menus . "<img src='images_new/ui_purple_off.png' title='Prestige Level 3' id='$purple_name' name='$purple_name' class='purpleButton'/>";
 				$costume_menus = $costume_menus . "<img src='images_new/ui_orange_off.png' title='Prestige Level 4' id='$orange_name' name='$orange_name' class='orangeButton'/>";
 				$costume_menus = $costume_menus . "<img src='images_new/ui_red_off.png' title='Prestige Level 5' id='$red_name' name='$red_name' class='redButton'/>";
+				$costume_menus = $costume_menus . "<img src='images_new/ui_yellow_off.png' title='Prestige Level 6' id='$yellow_name' name='$yellow_name' class='yellowButton'/>";
 				$costume_menus = $costume_menus . "
 			<select name='$flair_name' class='FlairArea' id='$flair_name'>
 				";
@@ -1619,8 +1666,8 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				}
 				$costume_menus = $costume_menus . "
 			</select>";
-			
-			$costume_menus = $costume_menus . "
+
+				$costume_menus = $costume_menus . "
 			<select name='$flair2_name' class='Flair2Area' id='$flair2_name'>
 				";
 				for ($k = 0; $k < count($flair); $k++) {
@@ -1687,7 +1734,6 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 		// This pulls it all together and renders the bulk of the page.
 		function populateCharacterMenu() {
 			$yoff = 23.75;
-			require_once ('marvelheroes_classes.php');
 			$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, "marvelheroesdb");
 			logvisit($mysqli);
 			// Load the heroes
@@ -1780,66 +1826,51 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 					<tbody>
 						";
 			$keyword = "";
-			if(!is_null($_POST['saved_keyword']))
-			{
+			if (!is_null($_POST['saved_keyword'])) {
 				$keyword = $_POST['saved_keyword'];
-			}
-			else if (!is_null($_COOKIE["marvelsig_keyword"])) {
+			} else if (!is_null($_COOKIE["marvelsig_keyword"])) {
 				$keyword = $_COOKIE["marvelsig_keyword"];
 			}
-			
+
 			$view_mode = 0;
-			if(!is_null($_POST['view_mode']))
-			{
+			if (!is_null($_POST['view_mode'])) {
 				$view_mode = intval($_POST['view_mode']);
-			}
-			else if (!is_null($_COOKIE["marvelsig_view_mode"])) {
+			} else if (!is_null($_COOKIE["marvelsig_view_mode"])) {
 				$view_mode = intval($_COOKIE["marvelsig_view_mode"]);
 			}
-					
+
 			$font = 0;
-			if(!is_null($_POST['font']))
-			{
+			if (!is_null($_POST['font'])) {
 				$font = intval($_POST['font']);
-			}
-			else if (!is_null($_COOKIE["marvelsig_font"])) {
+			} else if (!is_null($_COOKIE["marvelsig_font"])) {
 				$font = intval($_COOKIE["marvelsig_font"]);
 			}
-			
+
 			$border_type = 0;
-			if(!is_null($_POST['border_type']))
-			{
-				$border_type = intval($_POST['border_type']);	
-			}			
-			else if (!is_null($_COOKIE["marvelsig_border_type"])) {
+			if (!is_null($_POST['border_type'])) {
+				$border_type = intval($_POST['border_type']);
+			} else if (!is_null($_COOKIE["marvelsig_border_type"])) {
 				$border_type = intval($_COOKIE["marvelsig_border_type"]);
 			}
-			
+
 			$include_link = 1;
-			if(!is_null($_POST['include_link']))
-			{
-				$include_link = intval($_POST['include_link']);	
-			}			
-			else if (!is_null($_COOKIE["marvelsig_include_link"])) {
+			if (!is_null($_POST['include_link'])) {
+				$include_link = intval($_POST['include_link']);
+			} else if (!is_null($_COOKIE["marvelsig_include_link"])) {
 				$include_link = intval($_COOKIE["marvelsig_include_link"]);
 			}
-			
-			
+
 			$include_tooltips = 1;
-			if(!is_null($_POST['include_tooltips']))
-			{
+			if (!is_null($_POST['include_tooltips'])) {
 				$include_tooltips = intval($_POST['include_tooltips']);
-			}
-			else if (!is_null($_COOKIE["marvelsig_include_tooltips"])) {
+			} else if (!is_null($_COOKIE["marvelsig_include_tooltips"])) {
 				$include_tooltips = intval($_COOKIE["marvelsig_include_tooltips"]);
 			}
 
 			$border_color = "00AAFF";
-			if(!is_null($_POST['border_color']))
-			{
+			if (!is_null($_POST['border_color'])) {
 				$border_color = $_POST['border_color'];
-			}
-			else if (!is_null($_COOKIE["marvelsig_border_color"])) {
+			} else if (!is_null($_COOKIE["marvelsig_border_color"])) {
 				$border_color = $_COOKIE["marvelsig_border_color"];
 			}
 			// The fonts are loaded from the database.
@@ -1960,10 +1991,14 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 			}
 			print ">Portrait Frame on Transparent</option>";
 
-			print "</select></td>";
+			print "
+							</select></td>";
 
-			print "<td>Border color</td><td><input name='border_color' id='border_color' class='color' value='$border_color'></td></tr>";
-			
+			print "<td>Border color</td><td>
+							<input name='border_color' id='border_color' class='color' value='$border_color'>
+							</td>
+						</tr>";
+
 			// KEYWORD
 			print "
 						<tr>
@@ -1999,32 +2034,26 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 		function loadSigFromDatabase() {
 			$keyword = $_POST['saved_keyword'];
 			$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, "marvelheroesdb");
-			$query = "SELECT config, chars_per_row, view_mode, font, position_grid, level_grid, costume_grid, border_type, flair_grid, include_link, include_tooltips, border_color, version FROM saved_config WHERE keyword=?";
+			$query = "SELECT config, chars_per_row, view_mode, font, position_grid, level_grid, costume_grid, border_type, flair_grid, include_link, include_tooltips, border_color, version, half_grids FROM saved_config WHERE keyword=?";
 			$stmt = $mysqli -> prepare($query);
 			$stmt -> bind_param("s", $keyword);
 			$stmt -> execute();
-			$stmt -> bind_result($db_config, $db_chars_per_row, $db_view_mode, $db_font_index, $db_position_grid, $db_level_grid, $db_costume_grid, $db_border_type, $db_flair_grid, $db_include_link, $db_include_tooltips, $db_border_color, $db_version);
+			$stmt -> bind_result($db_config, $db_chars_per_row, $db_view_mode, $db_font_index, $db_position_grid, $db_level_grid, $db_costume_grid, $db_border_type, $db_flair_grid, $db_include_link, $db_include_tooltips, $db_border_color, $db_version, $db_half_grids);
 			$stmt -> fetch();
 			$_POST['position_grid'] = $db_position_grid;
 			$_POST['costume_grid'] = $db_costume_grid;
-			$_POST['level_grid'] = $db_level_grid;			
-			$version = 0;
-			if(!empty($db_version))
-			{
-				$version = intval($db_version);
-			}
-			if($version < 1)
-			{
-				$db_flair_grid = convertStringWithPadding($db_flair_grid, 2, 3);	
-			}
+			$_POST['level_grid'] = $db_level_grid;
 			$_POST['flair_grid'] = $db_flair_grid;
 			$_POST['include_link'] = $db_include_link;
 			$_POST['include_tooltips'] = $db_include_tooltips;
 			$_POST['font'] = $db_font_index;
 			$_POST['view_mode'] = $db_view_mode;
+			$_POST['version_tag'] = $db_version;
 			$_POST['border_type'] = $db_border_type;
-			if($db_border_color != null)
-			{
+			if ($db_half_grids != null) {
+				$_POST['half_grids'] = $db_half_grids;
+			}
+			if ($db_border_color != null) {
 				$_POST['border_color'] = $db_border_color;
 			}
 			debugPrint("Border type: " . strval($db_border_type));
@@ -2039,13 +2068,12 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 			$char_index = 0;
 			$val = "";
 			while ($stmt -> fetch()) {
-				while($char_index < $db_character_index)
-				{
+				while ($char_index < $db_character_index) {
 					$val = $val . "|";
 					$char_index += 1;
 				}
-				$val = $val . $db_link . "|";	
-				$char_index = $db_character_index + 1;			
+				$val = $val . $db_link . "|";
+				$char_index = $db_character_index + 1;
 			}
 			$_POST['link_grid'] = $val;
 			$stmt -> close();
@@ -2056,27 +2084,29 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 		function saveSig($fromHeader) {
 			$position_grid = $_POST['position_grid'];
 			$costume_grid = $_POST['costume_grid'];
+			$half_grids = $_POST['half_grids'];
 			$level_grid = $_POST['level_grid'];
 			$flair_grid = $_POST['flair_grid'];
 			$include_link = $_POST['include_link'];
 			$include_tooltips = $_POST['include_tooltips'];
 			$link_grid = htmlspecialchars($_POST['link_grid']);
-			$version = 1;
-			
+			$version = 2;
+			$_POST['version_tag'] = strval($version);
+
 			$view_mode = 0;
 			$font = 0;
 			$border_type = 0;
 			$border_color = "00AAFF";
-			if (!empty($_POST['view_mode'])) {
+			if (isset($_POST['view_mode'])) {
 				$view_mode = intval($_POST['view_mode']);
 			}
-			if (!empty($_POST['font'])) {
+			if (isset($_POST['font'])) {
 				$font = intval($_POST['font']);
 			}
-			if (!empty($_POST['border_type'])) {
+			if (isset($_POST['border_type'])) {
 				$border_type = intval($_POST['border_type']);
 			}
-			if (!empty($_POST['border_color'])) {
+			if (isset($_POST['border_color'])) {
 				$border_color = $_POST['border_color'];
 			}
 			// This code sets the cookies.
@@ -2113,7 +2143,7 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				} else {
 					clearCookie("marvelsig_border_type");
 				}
-				if (!empty($border_color)) {
+				if (isset($border_color)) {
 					setcookie("marvelsig_border_color", $border_color, time() + (60 * 60 * 24 * 30));
 				} else {
 					clearCookie("marvelsig_border_color");
@@ -2129,19 +2159,29 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 					clearCookie("marvelsig_include_tooltips");
 				}
 				setcookie("marvelsig_version", strval($version), time() + (60 * 60 * 24 * 30));
+				if (isset($half_grids)) {
+					setcookie("marvelsig_half_grids", strval($half_grids), time() + (60 * 60 * 24 * 30));
+				} else {
+					clearCookie("marvelsig_half_grids");
+				}
 				return;
 			}
 			// Here we do password checking
 			$keyword = $_POST['saved_keyword'];
 			$password = $_POST['saved_password'];
+			if (empty($keyword) || strlen($keyword) <= 0) {
+				if (!$fromHeader) {
+					showAlert("Settings saved in cookies.  You did not enter a keyword, so your settings are NOT saved to the database.");
+				}
+				return;
+			}
 			if (empty($password) || strlen($password) <= 0) {
 				if (!$fromHeader) {
 					showAlert("You must enter a password to save this sig.");
 				}
 				return;
 			}
-			if(strstr($keyword, " "))
-			{
+			if (strstr($keyword, " ")) {
 				if (!$fromHeader) {
 					showAlert("Keywords can not contain spaces.");
 				}
@@ -2173,23 +2213,22 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 				$stmt -> bind_param("s", $keyword);
 				$stmt -> execute();
 				$stmt -> close();
-				
+
 				$query = "DELETE FROM saved_links WHERE keyword=?";
 				$stmt = $mysqli -> prepare($query);
 				$stmt -> bind_param("s", $keyword);
 				$stmt -> execute();
 				$stmt -> close();
 
-				$query = "INSERT INTO saved_config(keyword, password, position_grid, costume_grid, level_grid, view_mode, font, include_link, include_tooltips, border_type, flair_grid, border_color, version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+				$query = "INSERT INTO saved_config(keyword, password, position_grid, costume_grid, level_grid, view_mode, font, include_link, include_tooltips, border_type, flair_grid, border_color, version, half_grids) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 				$stmt = $mysqli -> prepare($query);
-				$stmt -> bind_param("sssssiiiiissi", $keyword, $password, $position_grid, $costume_grid, $level_grid, $view_mode, $font, $include_link, $include_tooltips, $border_type, $flair_grid, $border_color, $version);
+				$stmt -> bind_param("sssssiiiiissis", $keyword, $password, $position_grid, $costume_grid, $level_grid, $view_mode, $font, $include_link, $include_tooltips, $border_type, $flair_grid, $border_color, $version, $half_grids);
 				$stmt -> execute();
 				$stmt -> close();
-				
-				$num_chars = strlen($position_grid)/6;
+
+				$num_chars = strlen($position_grid) / 6;
 				$links = explode("|", $link_grid);
-				for($i=0; $i < $num_chars; $i++)
-				{
+				for ($i = 0; $i < $num_chars; $i++) {
 					if (!empty($links[$i]) && strlen($links[$i]) > 0) {
 						$query = "INSERT INTO saved_links(keyword, character_index, link) VALUES (?,?,?)";
 						$stmt = $mysqli -> prepare($query);
@@ -2197,7 +2236,7 @@ function convertStringWithPadding($str, $old_token_length, $new_token_length)
 						$stmt -> execute();
 						$stmt -> close();
 					}
-				}				
+				}
 				if (!$fromHeader) {
 					showAlert("Sig saved!  Make sure you get the revised markdown, with your keyword included in the link!");
 				}

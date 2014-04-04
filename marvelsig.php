@@ -83,17 +83,6 @@ function process_error_backtrace($errno, $errstr, $errfile, $errline, $errcontex
 
 set_error_handler('process_error_backtrace');
 
-function convertStringWithPadding($str, $old_token_length, $new_token_length) {
-	$ret = "";
-	$index = 0;
-	while ($index < strlen($str)) {
-		$token = substr($str, $index, $old_token_length);
-		$ret = $ret . str_pad($token, $new_token_length, "0", STR_PAD_LEFT);
-		$index += $old_token_length;
-	}
-	return $ret;
-}
-
 function HEX2RGB($color) {
 	$color = str_replace("#", "", $color);
 	$color_array = array();
@@ -206,6 +195,12 @@ if (isset($_GET['version'])) {
 	$version = intval($_GET['version']);
 }
 
+$half_grids = "";
+if (isset($_GET['half_grids'])) {
+	$half_grids = $_GET['half_grids'];
+}
+
+
 // Okay, first thing: load all characters into an array.
 $characters = array();
 // Order the list by display position, and then numerically by costume.
@@ -265,17 +260,17 @@ $level = 0;
 // If there is a keyword, load the config from the database.  This is pretty straightforward.
 
 if ($keyword != NULL && strlen($keyword) > 0) {
-	$query = "SELECT config, chars_per_row, view_mode, font, position_grid, level_grid, costume_grid, border_type, flair_grid, border_color, version FROM saved_config WHERE keyword=?";
+	$query = "SELECT config, chars_per_row, view_mode, font, position_grid, level_grid, costume_grid, border_type, flair_grid, border_color, version, half_grids FROM saved_config WHERE keyword=?";
 	$stmt = $mysqli -> prepare($query);
 	$stmt -> bind_param("s", $keyword);
 	$stmt -> execute();
-	$stmt -> bind_result($db_config, $db_chars_per_row, $db_view_mode, $db_font_index, $db_position_grid, $db_level_grid, $db_costume_grid, $db_border_type, $db_flair_grid, $db_border_color, $db_version);
+	$stmt -> bind_result($db_config, $db_chars_per_row, $db_view_mode, $db_font_index, $db_position_grid, $db_level_grid, $db_costume_grid, $db_border_type, $db_flair_grid, $db_border_color, $db_version, $db_half_grids);
 	$stmt -> fetch();
 	$config_string = $db_config;
-	if (!empty($db_view_mode)) {
+	if (isset($db_view_mode)) {
 		$view_mode = intval($db_view_mode);
 	}
-	if (!empty($db_font_index)) {
+	if (isset($db_font_index)) {
 		$font_index = intval($db_font_index);
 	}
 	if (!empty($db_position_grid)) {
@@ -287,7 +282,7 @@ if ($keyword != NULL && strlen($keyword) > 0) {
 	if (!empty($db_level_grid)) {
 		$level_grid = $db_level_grid;
 	}
-	if (!empty($db_border_type)) {
+	if (isset($db_border_type)) {
 		$border_type = $db_border_type;
 	}
 	if (!empty($db_flair_grid)) {
@@ -296,8 +291,11 @@ if ($keyword != NULL && strlen($keyword) > 0) {
 	if (!empty($db_border_color)) {
 		$border_color = $db_border_color;
 	}
-	if (!empty($db_version)) {
+	if (isset($db_version)) {
 		$version = intval($db_version);
+	}
+	if (isset($db_half_grids)) {
+		$half_grids = $db_half_grids;
 	}
 	$stmt -> close();
 }
@@ -308,9 +306,7 @@ if (strlen($config_string) > 0 && strlen($position_grid) <= 0) {
 }
 
 $num_characters = count($characters);
-if ($version == 0) {
-	$flair_grid = convertStringWithPadding($flair_grid, 2, 3);
-}
+$flair_grid = convertLegacyFlairString($flair_grid, $version, $num_characters);
 
 $grid_width = 0;
 $grid_height = 0;
@@ -353,6 +349,7 @@ $blue = imagecolorallocate($canvas, 30, 144, 255);
 $purple = imagecolorallocate($canvas, 203, 0, 254);
 $orange = imagecolorallocate($canvas, 250, 95, 3);
 $red = imagecolorallocate($canvas, 254, 0, 0);
+$yellow = imagecolorallocate($canvas, 244, 205, 49);
 $frame = imagecolorallocate($canvas, 0, 170, 255);
 if (strlen($border_color) > 0) {
 	$colors = HEX2RGB($border_color);
@@ -381,6 +378,7 @@ $y_grid = 0;
 $flair_image = "";
 // Iterate over the grid squares
 for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
+	$xoff_image = 0;
 	for ($x_grid = 0; $x_grid < $grid_width; $x_grid++) {
 		$imagefile = "";
 		// Create a grid_tag, which is the 6-character code for this square.
@@ -418,13 +416,13 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			}
 			$level = intval(getGridValue($level_grid, $char_index, 3));
 
-			$flair_index = intval(getGridValue($flair_grid, $char_index, 3));
-			$lowerleft_flair_index = intval(getGridValue($flair_grid, $num_characters + $char_index, 3));
-			$upperleft_flair_index = intval(getGridValue($flair_grid, (2 * $num_characters) + $char_index, 3));
+			$flair_index = intval(getGridValue($flair_grid, 4 * $char_index, 3));
+			$lowerleft_flair_index = intval(getGridValue($flair_grid, (4 * $char_index) + 1, 3));
+			$upperleft_flair_index = intval(getGridValue($flair_grid, (4 * $char_index) + 2, 3));
 		}
 
 		// Calculate drawing coordinates
-		$x_offset = $x_grid * 45;
+		$x_offset = $xoff_image;
 		$y_offset = $y_grid * 45;
 		// Draw the character portrait.
 		if (strlen($imagefile) > 0) {
@@ -434,7 +432,15 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			} else {imagecopy($canvas, $im, $x_offset, $y_offset, 0, 0, 45, 45);
 			}
 			imagedestroy($im);
+			$xoff_image += 45;
 		} else {
+			if (strpos($half_grids, $grid_tag) === false) {
+				$xoff_image += 45;
+			}
+			else
+			{
+				$xoff_image += 22.5;
+			}
 			continue;
 		}
 		// Render the level text, adjusted for prestige level.
@@ -452,12 +458,15 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			} else if ($level > 240 && $level <= 300) {
 				$color = $orange;
 				$level = $level - 240;
-			} else if ($level > 300) {
+			} else if ($level > 300 && $level <= 360) {
 				$color = $red;
 				$level = $level - 300;
+			} else if ($level > 360) {
+				$color = $yellow;
+				$level = $level - 360;
 				if ($level > 60) {
 					$level = 60;
-				}
+				}				
 			}
 			$text = strval($level);
 			$box = imagettfbbox(12, 0, $font, $text);
@@ -467,7 +476,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			imagettftext($canvas, 12, 0, $x_offset + 45 - $text_width - 4, $y_offset + 41, $color, $font, $text);
 			// imagettftext($canvas, 12, 0, $x_offset + 25, $y_offset + 41, $color, $font, $text);
 		}
-		if ($flair_index > 0) {
+		if ($flair_index > 0 && !empty($flair[$flair_index])) {
 			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$flair_index] -> get_flair_file();
 			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$flair_index] -> get_flair_file());
 			$xoff = 12 - $fwidth;
@@ -477,7 +486,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			imagedestroy($im);
 		}
 		$line_drawn = 0;
-		if ($lowerleft_flair_index > 0) {
+		if ($lowerleft_flair_index > 0 && !empty($flair[$lowerleft_flair_index])) {
 			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index] -> get_flair_file();
 			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$lowerleft_flair_index] -> get_flair_file());
 			$xoff = 0 + $flair[$lowerleft_flair_index] -> get_flair_x_offset();
@@ -498,7 +507,7 @@ for ($y_grid = 0; $y_grid < $grid_height; $y_grid++) {
 			}			
 			imagedestroy($im);
 		}
-		if ($upperleft_flair_index > 0) {
+		if ($upperleft_flair_index > 0 && !empty($flair[$upperleft_flair_index])) {
 			$flair_image = "glyphicons_free/glyphicons/png/" . $flair[$upperleft_flair_index] -> get_flair_file();
 			list($fwidth, $fheight) = getimagesize("glyphicons_free/glyphicons/png/" . $flair[$upperleft_flair_index] -> get_flair_file());
 			$xoff = 12 - $fwidth;
@@ -590,25 +599,6 @@ header('Content-type: image/png');
 // Create the PNG
 imagepng($canvas);
 imagedestroy($canvas);
-
-// This is a convenience function to get a value from a "grid" (really just fixed-length token strings)
-function getGridValue($inGrid, $inIndex, $inGridCellSize) {
-	if (strlen($inGrid) <= ($inIndex * $inGridCellSize)) {
-		return NULL;
-	}
-	$offset = $inIndex * $inGridCellSize;
-	return substr($inGrid, $offset, $inGridCellSize);
-}
-
-// This is a convenience function to set a value in a "grid" (really just fixed-length token strings)
-function setGridValue($inGrid, $inValue, $inIndex, $inGridCellSize) {
-	if (strlen($inGrid) <= ($inIndex * $inGridCellSize)) {
-		return $inGrid;
-	}
-	$offset = $inIndex * $inGridCellSize;
-	$new_val = str_pad($inValue, $inGridCellSize, "0", STR_PAD_LEFT);
-	return substr($inGrid, 0, $offset) . $new_val . substr($inGrid, $offset + $inGridCellSize);
-}
 
 // This function converts a V1 config to a V2 config.
 function convertLegacyConfig($characters, $config_string) {

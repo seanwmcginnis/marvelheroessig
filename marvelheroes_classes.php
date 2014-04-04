@@ -175,4 +175,71 @@ class MarvelHero
 	}
 }
 
+// This is a convenience function to get a value from a "grid" (really just fixed-length token strings)
+function getGridValue($inGrid, $inIndex, $inGridCellSize) {
+	if (strlen($inGrid) <= ($inIndex * $inGridCellSize)) {
+		return NULL;
+	}
+	$offset = $inIndex * $inGridCellSize;
+	return substr($inGrid, $offset, $inGridCellSize);
+}
+
+// This is a convenience function to set a value in a "grid" (really just fixed-length token strings)
+function setGridValue($inGrid, $inValue, $inIndex, $inGridCellSize) {
+	if (strlen($inGrid) <= ($inIndex * $inGridCellSize)) {
+		return $inGrid;
+	}
+	$offset = $inIndex * $inGridCellSize;
+	$new_val = str_pad($inValue, $inGridCellSize, "0", STR_PAD_LEFT);
+	return substr($inGrid, 0, $offset) . $new_val . substr($inGrid, $offset + $inGridCellSize);
+}
+
+function convertStringWithPadding($str, $old_token_length, $new_token_length) {
+	$ret = "";
+	$index = 0;
+	while ($index < strlen($str)) {
+		$token = substr($str, $index, $old_token_length);
+		$ret = $ret . str_pad($token, $new_token_length, "0", STR_PAD_LEFT);
+		$index += $old_token_length;
+	}
+	return $ret;
+}
+
+function convertLegacyFlairString($str, $version, $num_chars)
+{
+	if($version >= 2)
+	{
+		return $str;
+	}
+	$num_in_field = 0;
+	if($version == 0)
+	{
+		$str = convertStringWithPadding($str, 2, 3);
+		$num_in_field = strlen($str)/6;
+	}
+	if($version == 1)
+	{
+		$num_in_field = strlen($str)/9;
+	}
+	$ret = "";
+	for($i=0; $i < $num_chars; $i++)
+	{
+		if($i >= $num_in_field)	
+		{
+			$ret = $ret . "000000000000";
+		}
+		else {
+			$ret = $ret . getGridValue($str, $i, 3) . getGridValue($str, $num_in_field + $i, 3);
+			if($version == 1)
+			{
+				$ret = $ret . getGridValue($str, (2 * $num_in_field) + $i, 3) . "000";
+			}
+			else
+			{
+				$ret = $ret . "000000";
+			}
+		}
+	}
+	return $ret;
+}
 ?>
