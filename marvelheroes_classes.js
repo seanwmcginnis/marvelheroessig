@@ -24,7 +24,6 @@ function MarvelHero(char_index, home_x, home_y, grid_tag, myButton, myMenu, myLe
 	this.char_name = "";
 	this.costume_names = null;
 	this.costume_indices = null;
-        this.image_files = null;
 	this.myLevelLabel = myLevelLabel;
 	this.myFlairImage = myFlairImage;
 	this.mySource = mySource;

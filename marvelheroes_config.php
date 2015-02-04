@@ -13,7 +13,7 @@ function loadConfig( $vars = array() ) {
 }
  
 // Then call :
-$cfg = array( 'DB_HOST', 'DB_USER', 'DB_PASS', 'IMGUR_CLIENTID', 'IMGUR_SECRET');
+$cfg = array( 'DB_HOST', 'DB_USER', 'DB_PASS' );
 loadConfig( $cfg );
 
 ?>
